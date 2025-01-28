@@ -27,28 +27,30 @@ checklist = {
     ]
 }
 
+# Application Title
 st.title("Data Scientist Web Application Checklist")
+
+# Initialize session state for user inputs
+if "user_inputs" not in st.session_state:
+    st.session_state.user_inputs = {task: "" for step in checklist.values() for task in step}
 
 # Sidebar navigation
 step = st.sidebar.selectbox("Select Step", list(checklist.keys()))
 
-# Collect user inputs
-user_inputs = {}
-
+# Display tasks and code input areas for the selected step
 st.header(step)
 for line_item in checklist[step]:
     st.subheader(line_item)
-
-    # Input code snippet
-    code_input = st.text_area(
+    
+    # Input code snippet for each task
+    st.session_state.user_inputs[line_item] = st.text_area(
         f"Write code for: {line_item}",
         key=f"code_{line_item}",
+        value=st.session_state.user_inputs[line_item],
         placeholder=f"Type your Python code here for '{line_item}'"
     )
-    # Save the input in user_inputs dictionary
-    user_inputs[line_item] = code_input
 
-# Save and Export
+# Sidebar Export Options
 st.sidebar.title("Export Options")
 
 # Function to export to JSON
@@ -78,16 +80,16 @@ def export_to_pdf(data):
     pdf.output(file_name)
     return file_name
 
-# Export options
+# Handle export based on user selection
 export_format = st.sidebar.selectbox("Select Export Format", ["JSON", "CSV", "PDF"])
 if st.sidebar.button("Export Code Snippets"):
-    if any(user_inputs.values()):  # Ensure there's at least one input
+    if any(value.strip() for value in st.session_state.user_inputs.values()):  # Ensure at least one input is filled
         if export_format == "JSON":
-            file_name = export_to_json(user_inputs)
+            file_name = export_to_json(st.session_state.user_inputs)
         elif export_format == "CSV":
-            file_name = export_to_csv(user_inputs)
+            file_name = export_to_csv(st.session_state.user_inputs)
         elif export_format == "PDF":
-            file_name = export_to_pdf(user_inputs)
+            file_name = export_to_pdf(st.session_state.user_inputs)
         
         with open(file_name, "rb") as file:
             st.sidebar.download_button(
