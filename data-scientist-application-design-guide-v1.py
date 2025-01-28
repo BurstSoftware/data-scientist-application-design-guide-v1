@@ -31,28 +31,24 @@ step = st.sidebar.selectbox("Select Step", list(checklist.keys()))
 
 # Display step details
 st.header(step)
+
+# Iterate through line items for the selected step
 for line_item in checklist[step]:
     st.subheader(line_item)
 
     # Input code snippet
-    st.text_area(f"Write code for: {line_item}", key=f"code_{line_item}")
-
-    # Upload code snippet
-    uploaded_file = st.file_uploader(
-        f"Upload code snippet for: {line_item}", type=["py"], key=f"upload_{line_item}"
+    code_input = st.text_area(
+        f"Write code for: {line_item}", 
+        key=f"code_{line_item}", 
+        placeholder=f"Type your Python code here for '{line_item}'"
     )
 
-    # Display uploaded code (if any)
-    if uploaded_file:
-        code_content = uploaded_file.read().decode("utf-8")
-        st.code(code_content, language="python")
-    
     # Optional: Execute snippet
     execute = st.checkbox(f"Execute {line_item}", key=f"execute_{line_item}")
-    if execute and uploaded_file:
+    if execute and code_input.strip():  # Ensure there is code to execute
         exec_globals = {}
         try:
-            exec(code_content, exec_globals)
+            exec(code_input, exec_globals)
             st.success("Execution Successful!")
         except Exception as e:
             st.error(f"Error: {e}")
@@ -65,5 +61,6 @@ if st.sidebar.button("Export Code Snippets"):
             file.write(f"# {step}\n")
             for item in items:
                 code = st.session_state.get(f"code_{item}", "")
-                file.write(f"# {item}\n{code}\n\n")
+                if code.strip():  # Only include non-empty code snippets
+                    file.write(f"# {item}\n{code}\n\n")
     st.sidebar.success("Code exported successfully!")
